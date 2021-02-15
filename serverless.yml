@@ -1,0 +1,85 @@
+service: seneca-stats-service
+
+frameworkVersion: ">=1.1.0"
+
+plugins:
+  - serverless-dynamodb-local
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  region: eu-west-2
+  profile: serverless-admin
+  apiGateway:
+    shouldStartNameWithService: true
+  environment:
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+
+functions:
+  setCourseProgress:
+    handler: courses/post.post
+    events:
+      - http:
+          path: courses/{courseId}
+          method: post
+          cors: true
+          integration: lambda
+          request:
+            parameters:
+              headers:
+                X-User-Id: true
+  getCourses:
+    handler: courses/get.get
+    events:
+      - http:
+          path: '/courses/{courseId}'
+          cors: true
+          method: get
+          integration: lambda
+          request:
+            parameters:
+              headers:
+                X-User-Id: true
+  getSessions:
+    handler: courses/sessions/get.get
+    events:
+      - http:
+          cors: true
+          method: get
+          path: '/courses/{courseId}/sessions/{sessionId}'
+          integration: lambda
+          request:
+            parameters:
+              headers:
+                X-User-Id: true
+resources:
+  Resources:
+    SenecaStatsDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: sk
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: sk
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}

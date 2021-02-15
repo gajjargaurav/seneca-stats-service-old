@@ -1,0 +1,14 @@
+{
+  "name": "seneca-stats-service",
+  "version": "1.0.0",
+  "description": "Serverless seneca-stats-service",
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.437.0",
+    "jest": "^26.6.3"
+  }
+}
